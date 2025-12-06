@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1084688755048",
+    "project_id": "toko-api-8050c",
+    "storage_bucket": "toko-api-8050c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1084688755048:android:a4b47eda3a018e0f72cedd",
+        "android_client_info": {
+          "package_name": "com.example.aplikasi_flutter_pertamaku"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwe9iTswIJjcRuc6V8YYwbCbd3jr4P0d0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
