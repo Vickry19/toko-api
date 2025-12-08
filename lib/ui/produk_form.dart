@@ -219,13 +219,14 @@ class _ProdukFormState extends State<ProdukForm> {
                 child: SizedBox(
                   width: 180,
                   child: ElevatedButton.icon(
-                    icon: Icon(Icons.save, size: 20),
+                    icon: Icon(Icons.save, size: 20, color: Colors.white),
                     label: Text(
                       _isEdit ? 'Perbarui' : 'Simpan',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(color: Colors.white, fontSize: 16)
+                      ,
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isEdit ? Colors.blue : Colors.green,
+                      backgroundColor: Colors.green,
                       padding: EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

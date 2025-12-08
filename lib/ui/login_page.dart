@@ -12,6 +12,7 @@ class _LoginPageState extends State<LoginPage> {
   final email = TextEditingController();
   final password = TextEditingController();
   bool loading = false;
+   bool _obscurePassword = true;
 
   // ============================
   // 🔥 LOGIN MENGGUNAKAN FIREBASE
@@ -113,7 +114,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     TextField(
                       controller: password,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: "Password",
                         prefixIcon: Icon(Icons.lock_outline),

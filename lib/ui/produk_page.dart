@@ -6,11 +6,15 @@ import 'produk_detail.dart';
 import 'login_page.dart';
 
 class ProdukPage extends StatefulWidget {
+  const ProdukPage({super.key});
+
   @override
   _ProdukPageState createState() => _ProdukPageState();
 }
 
 class _ProdukPageState extends State<ProdukPage> {
+  List<String> kodeList = [];
+
   String _formatHarga(int harga) {
     final format = NumberFormat.currency(
       locale: 'id_ID',
@@ -36,9 +40,6 @@ class _ProdukPageState extends State<ProdukPage> {
     );
   }
 
-  // ====================================================
-  // 🔥 Hapus data dari Firebase
-  // ====================================================
   Future<void> _hapusProduk(String docId, String namaProduk) async {
     await FirebaseFirestore.instance.collection('produk').doc(docId).delete();
 
@@ -46,26 +47,6 @@ class _ProdukPageState extends State<ProdukPage> {
       SnackBar(
         content: Text('Produk "$namaProduk" berhasil dihapus!'),
         backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  // ====================================================
-  // 🔥 Navigasi Ubah Produk
-  // ====================================================
-  void _editProduk(DocumentSnapshot produk) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProdukForm(
-          existingCodes: [],
-          initialData: {
-            'id': produk.id,
-            'kodeProduk': produk['kodeProduk'],
-            'namaProduk': produk['namaProduk'],
-            'harga': produk['harga'],
-          },
-        ),
       ),
     );
   }
@@ -79,42 +60,50 @@ class _ProdukPageState extends State<ProdukPage> {
         centerTitle: true,
         elevation: 4,
         actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _logout,
-          )
+          IconButton(icon: const Icon(Icons.logout,size: 20,), onPressed: _logout, tooltip: 'Logout',color: Colors.redAccent)
         ],
       ),
 
-      // ========================================================
-      // 🔥 STREAMBUILDER UNTUK REALTIME FIRESTORE
-      // ========================================================
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('produk')
             .orderBy('namaProduk')
             .snapshots(),
         builder: (context, snapshot) {
-          // Loading
           if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           final data = snapshot.data!.docs;
 
-          // Jika kosong
+          // List kode produk
+          final existingCodes = data
+              .map((d) {
+                final map = d.data() as Map<String, dynamic>;
+                return map['kodeProduk']?.toString();
+              })
+              .where((e) => e != null)
+              .cast<String>()
+              .toList();
+          kodeList = existingCodes;
+
           if (data.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inventory_2_outlined,
-                      color: Colors.grey[400], size: 80),
-                  SizedBox(height: 16),
-                  Text('Belum ada produk',
-                      style: TextStyle(fontSize: 18, color: Colors.grey[700])),
-                  SizedBox(height: 8),
-                  Text('Tekan tombol + untuk menambahkan produk baru'),
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    color: Colors.grey[400],
+                    size: 80,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Belum ada produk',
+                    style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('Tekan tombol + untuk menambahkan produk baru'),
                 ],
               ),
             );
@@ -133,7 +122,9 @@ class _ProdukPageState extends State<ProdukPage> {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   leading: const CircleAvatar(
                     backgroundColor: Colors.green,
                     child: Icon(Icons.shopping_bag, color: Colors.white),
@@ -152,31 +143,70 @@ class _ProdukPageState extends State<ProdukPage> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // EDIT
                       IconButton(
-                        icon: Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _editProduk(produk),
+                        icon: const Icon(Icons.edit, color: Colors.blue),tooltip:"Edit Produk" ,
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProdukForm(
+                                existingCodes: existingCodes,
+                                initialData: {
+                                  'id': produk.id,
+                                  'kodeProduk': produk['kodeProduk'],
+                                  'namaProduk': produk['namaProduk'],
+                                  'harga': produk['harga'],
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
-
-                      // DELETE
                       IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _hapusProduk(
-                          produk.id,
-                          produk['namaProduk'],
-                        ),
+                        icon: const Icon(Icons.delete, color: Colors.red),tooltip: 'Hapus Produk',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text("Hapus Produk"),
+                                content: Text(
+                                  'Apakah Anda yakin ingin menghapus produk "${produk['namaProduk']}"?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text("Batal",
+                                        style: TextStyle(color: Colors.black)),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context); // tutup dialog
+                                      _hapusProduk(
+                                        produk.id,
+                                        produk['namaProduk'],
+                                      );
+                                    },
+                                    child: Text("Hapus"
+                                        , style: TextStyle(color: Colors.black),
+                                        ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                       ),
                     ],
                   ),
-
-                  // DETAIL PRODUK
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ProdukDetail(
-                          produkId: produk.id,
-                        ),
+                        builder: (_) => ProdukDetail(produkId: produk.id),
                       ),
                     );
                   },
@@ -189,13 +219,49 @@ class _ProdukPageState extends State<ProdukPage> {
 
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.green,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Produk'),
+        icon: const Icon(Icons.add, color: Colors.black),
+        label: const Text(
+          'Tambah Produk',
+          style: TextStyle(color: Colors.black, fontSize: 16),
+        ),
         onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => ProdukForm(existingCodes: [])),
-          );
+          try {
+            // Tampilkan loading saat mengambil data dari Firestore
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => const Center(child: CircularProgressIndicator()),
+            );
+
+            // Ambil semua kode produk
+            final snapshot = await FirebaseFirestore.instance
+                .collection('produk')
+                .get();
+
+            // Tutup dialog loading
+            Navigator.pop(context);
+
+            // List kode produk existing
+            final existingCodes = snapshot.docs
+                .map((d) {
+                  final map = d.data();
+                  return map['kodeProduk']?.toString();
+                })
+                .where((e) => e != null)
+                .cast<String>()
+                .toList();
+
+            // Navigasi ke halaman tambah produk
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProdukForm(existingCodes: kodeList),
+              ),
+            );
+          } catch (e) {
+            Navigator.pop(context); // Pastikan loading tertutup
+            print("Error on FAB: $e");
+          }
         },
       ),
     );
